@@ -12,6 +12,8 @@ In this project first we analysed the data. Based on the data that was provided 
 - Weather data imported into the project as csv file GlobalLandTemperaturesByCity.csv
 - Cities, VisaTypes, State, Countries Dimensions table data is sourced from I94_SAS_Labels_Descriptions.SAS
 - Other Dimension table data is sourced from the Immigration data Parquet files
+- ** Note, Weather data is not uploaded into Git to download the data go to
+    https://www.kaggle.com/datasets/berkeleyearth/climate-change-earth-surface-temperature-data, download the file `GlobalLandTemperaturesByCity.csv` and place the file in the main folder before running the ETL process
 ## Star Schema
 ![Schema Diagram](capstone_start_schema.png)
 
@@ -63,13 +65,13 @@ visa_code: string
  type_desc: string (nullable = true)  
 
 ### Time Dimension table
- time_stamp: timestamp (nullable = true)
- hour: integer (nullable = true)
- day: integer (nullable = true)
- week: integer (nullable = true)
- month: integer (nullable = true)
- year: integer (nullable = true)
- weekday: integer (nullable = true)
+ time_stamp: timestamp (nullable = true)  
+ hour: integer (nullable = true)  
+ day: integer (nullable = true)  
+ week: integer (nullable = true)  
+ month: integer (nullable = true)  
+ year: integer (nullable = true)  
+ weekday: integer (nullable = true)  
 
 ### Weather Dimension table
 dt: date  
