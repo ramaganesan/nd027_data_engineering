@@ -41,39 +41,46 @@ cicid: double
   admnum: double (nullable = true)  
 
 ### Countries Dimension table
- |-- country_code: string  
- |-- name: string (nullable = true)  
+ country_code: string  
+ name: string (nullable = true)  
 
 ### State Dimension table
-|-- state_code: string (nullable = true)  
- |-- name: string (nullable = true)  
+state_code: string (nullable = true)  
+ name: string (nullable = true)  
 
 ### Cities Demographics Dimension table
-|-- city: string (nullable = true)  
- |-- state_code: string (nullable = true)  
- |-- male_population: long (nullable = true)  
- |-- female_population: long (nullable = true)  
- |-- total_population: long (nullable = true)  
- |-- number_of_veterans: long (nullable = true)  
- |-- foreign_born: long (nullable = true)  
- |-- city_code: string   
+city: string (nullable = true)  
+ state_code: string (nullable = true)  
+ male_population: long (nullable = true)  
+ female_population: long (nullable = true)  
+ total_population: long (nullable = true)  
+ number_of_veterans: long (nullable = true)  
+ foreign_born: long (nullable = true)  
+ city_code: string   
 
 ### VisaType Dimension table
-|-- visa_code: string   
- |-- type_desc: string (nullable = true)  
+visa_code: string   
+ type_desc: string (nullable = true)  
 
 ### Time Dimension table
+ time_stamp: timestamp (nullable = true)
+ hour: integer (nullable = true)
+ day: integer (nullable = true)
+ week: integer (nullable = true)
+ month: integer (nullable = true)
+ year: integer (nullable = true)
+ weekday: integer (nullable = true)
 
-###Weather Dimension table
-|-- dt: date  
- |-- AverageTemperature: double (nullable = true)  
- |-- AverageTemperatureUncertainty: double (nullable = true)  
- |-- City: string (nullable = true)  
- |-- Country: string (nullable = true)  
- |-- Latitude: integer (nullable = true)  
- |-- Longitude: integer (nullable = true)  
- |-- date: date (nullable = true)  
- |-- city_code: string (nullable = true)  
+### Weather Dimension table
+dt: date  
+ AverageTemperature: double (nullable = true)  
+ AverageTemperatureUncertainty: double (nullable = true)  
+ City: string (nullable = true)  
+ Country: string (nullable = true)  
+ Latitude: integer (nullable = true)  
+ Longitude: integer (nullable = true)  
+ date: date (nullable = true)  
+ city_code: string (nullable = true)  
 
 ## ETL Process
 - Create the Spark Session
