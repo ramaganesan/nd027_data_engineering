@@ -1,10 +1,10 @@
 ## Summary
 In this project we provided Star schema model to analyse US Immigration data. By providing the Star schema model, users can anlyze the data as per the requirements. 
 
-##Scope
-In this project first we analysed the data. Based on the data that was provided and also the analysis done 
+## Scope
+In this project first we analysed the data. Based on the data that was provided and also the analysis 
 - We decided to use PySPark to set up the ETL Pipeline
-- The output of the ETL pipeline will be Apache Parquet format which can later injected into RedShift for further analysis
+- The output of the ETL pipeline will be Apache Parquet format which can later be injected into RedShift for further analysis
 - We have provided sufficient dimension tables, so that data can be analysed based on requirements
 
 ## Datasets:
@@ -84,15 +84,30 @@ cicid: double
 - Parse the GlobalLandTemperaturesByCity.csv to create the Weather Dimension table
 - During the process do data quality checks as well 
 
-##Other Scenarios
-####The data was increased by 100x:
+## Project File
+```
+etl.py => Main Spark ETL process
+utils.py => Contains utils function used by the ETL process
+data_lake_analysis.ipynb => Jupyter Notebook that provides sample analysis of ETL output
+
+```
+
+## Running the Process
+```
+  pip install requirements.txt
+  
+  python3 etl.py
+```
+
+## Other Scenarios
+#### The data was increased by 100x:
 If the data size increased by 100x then we can create a Spark EMR cluster in AWS to injest the data.  
 We can also injest the data into AWS Redshift Cluster to do further analysis
 
-####The pipelines would be run on a daily basis by 7 am every day:
+#### The pipelines would be run on a daily basis by 7 am every day:
 We can crate an Apache Airflow process to run the ETL on schedule
 
-####The database needed to be accessed by 100+ people:
+#### The database needed to be accessed by 100+ people:
 The best option for this is to injest the data into AWS Redshift Cluster, so that we can configure users to analyze the data
 
 
