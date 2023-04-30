@@ -5,7 +5,8 @@ from pyspark.sql.functions import udf, col, desc, dense_rank, dayofweek, lower, 
 from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, date_format
 from pyspark.sql.types import TimestampType, DateType, StructField, StructType, StringType, DoubleType, IntegerType
 from utils import extract_city_codes, extract_state_codes, extract_country_codes, extract_visa_types, dict_to_tuples, \
-    cleanup_weather_data, group_cities_demographics_data, check_dataframe_rows, check_dataframe_fields, check_dataframe_pk
+    cleanup_weather_data, group_cities_demographics_data, check_dataframe_rows, check_dataframe_fields, \
+    immigration_dataframe_load, duplicates_removal
 
 # data input
 input_data = 'sas_data'
@@ -54,12 +55,13 @@ def create_immigration_df(spark, input_sas_data):
     df_immigration = df_immigration.filter(
         df_immigration.cicid.isNotNull())
 
-    # Data Quality Check
+    # Data Quality Checks
+    immigration_dataframe_load(spark, df_immigration, immigration_data, 5000)
     check_dataframe_rows(df_immigration, True)
     columns_to_check = ['cicid', 'i94yr', 'i94mon', 'i94cit', 'i94res', 'i94port', 'arrdate',
-                                            'i94mode', 'i94addr', 'depdate', 'i94visa', 'visatype', 'dtaddto',
-                                            'biryear', 'i94bir',
-                                            'gender', 'admnum']
+                        'i94mode', 'i94addr', 'depdate', 'i94visa', 'visatype', 'dtaddto',
+                        'biryear', 'i94bir',
+                        'gender', 'admnum']
     check_dataframe_fields(df_immigration, True, columns_to_check)
 
     return df_immigration
@@ -79,6 +81,7 @@ def create_immigration_fact_table(df_immigration):
 
     # Data Quality Check
     check_dataframe_rows(df_immigration_fact, True)
+    df_immigration_fact = duplicates_removal(df_immigration_fact, ['cicid'])
 
     df_immigration_fact.write.parquet(os.path.join(output_data, 'immigration_fact'), partitionBy=['i94yr', 'i94mon'],
                                       mode='overwrite')
@@ -96,6 +99,10 @@ def create_user_dim_table(df_immigration):
     df_user_dim = df_immigration.select(['cicid', 'biryear', 'i94bir', 'gender', 'admnum'])
     df_user_dim.printSchema()
 
+    # Data Quality Check
+    check_dataframe_rows(df_user_dim, True)
+    df_user_dim = duplicates_removal(df_user_dim, ['cicid'])
+
     df_user_dim.write.parquet(os.path.join(output_data, 'users_dimension'),
                               mode='overwrite')
     print(f'User Dimension Table created in {output_data}/users_dimension')
@@ -105,7 +112,7 @@ def create_country_dim_table(spark):
     """
     Creates the Countries Dimension table
     :param spark:
-    :return:
+    :return: df_countries_dim
     """
     print(f'Creating Country Dimension Table')
     countries_codes = extract_country_codes()
@@ -120,16 +127,18 @@ def create_country_dim_table(spark):
 
     # Data Quality Check
     check_dataframe_rows(df_countries_dim, True)
+    df_countries_dim = duplicates_removal(df_countries_dim, ['country_code'])
 
     df_countries_dim.write.parquet(os.path.join(output_data, 'countries_dimension'), mode='overwrite')
     print(f'Country Dimension Table created in {output_data}/countries_dimension')
+    return df_countries_dim
 
 
 def create_state_dim_table(spark):
     """
     Create the State Dimension table
     :param spark:
-    :return:
+    :return: df_states_dim
     """
     print(f'Creating States Dimension Table')
     state_codes = extract_state_codes()
@@ -144,16 +153,18 @@ def create_state_dim_table(spark):
 
     # Data Quality Check
     check_dataframe_rows(df_states_dim, True)
+    df_states_dim = duplicates_removal(df_states_dim, ['state_code'])
 
     df_states_dim.write.parquet(os.path.join(output_data, 'states_dimension'), mode='overwrite')
     print(f'States Dimension Table created in {output_data}/states_dimension')
+    return df_states_dim
 
 
 def create_cities_demographics_dim_table(spark):
     """
     Create the Cities Dimension table
     :param spark:
-    :return:
+    :return: df_cities_demographics
     """
     print(f'Creating Cities Demographics Dimension Table')
 
@@ -189,21 +200,25 @@ def create_cities_demographics_dim_table(spark):
                                                          lower(df_cities_demographics.city) == lower(
                                                              df_city_codes.city), 'left').drop(df_city_codes.city)
 
-    df_cities_demographics.dropDuplicates()
     df_cities_demographics.printSchema()
+
+    # Data Quality Check
+    check_dataframe_rows(df_cities_demographics, True)
+    df_cities_demographics = duplicates_removal(df_cities_demographics, ['city_code', 'state_code'])
 
     df_cities_demographics.filter(
         df_cities_demographics.city_code.isNotNull()).show()
 
     df_cities_demographics.write.parquet(os.path.join(output_data, 'cities_demographics_dimension'), mode='overwrite')
     print(f'Cities Demographics Dimension created in {output_data}/cities_demographics_dimension')
+    return df_cities_demographics
 
 
 def create_visatype_dim_table(spark):
     """
     Create the VisaType Dimension table
     :param spark:
-    :return:
+    :return: df_visa_types_dim
     """
     print(f'Creating Visatypes Dimension Table')
     visa_types = extract_visa_types()
@@ -213,21 +228,22 @@ def create_visatype_dim_table(spark):
         StructField('visa_code', StringType(), True),
         StructField('type_desc', StringType(), True)
     ])
-    df_states_dim = spark.createDataFrame(data=visa_types, schema=schema)
-    df_states_dim.printSchema()
+    df_visa_types_dim = spark.createDataFrame(data=visa_types, schema=schema)
+    df_visa_types_dim.printSchema()
 
-    df_states_dim.write.parquet(os.path.join(output_data, 'visa_types_dimension'), mode='overwrite')
+    df_visa_types_dim.write.parquet(os.path.join(output_data, 'visa_types_dimension'), mode='overwrite')
     print(f'Visatypes Dimension Table created in {output_data}/visa_types_dimension')
+    return df_visa_types_dim
 
 
 def create_time_dim_table(df_immigration):
     """
     Create the Time Dimension table
     :param df_immigration:
-    :return:
+    :return: time_table
     """
     print(f'Creating Time Dimension Table')
-    ##using both arrival and departure dates
+    # using both arrival and departure dates
     arrival_date_ts = df_immigration.select('arrival_date_ts')
     departure_date_ts = df_immigration.select('departure_date_ts')
     df_time = arrival_date_ts.union(departure_date_ts)
@@ -245,13 +261,14 @@ def create_time_dim_table(df_immigration):
 
     time_table.write.parquet(os.path.join(output_data, 'time_dimension'), mode='overwrite')
     print(f'Time Dimension Table created in {output_data}/time_dimension')
+    return time_table
 
 
 def create_weather_dim_table(spark):
     """
     Creates the Weather Dimension table
     :param spark:
-    :return:
+    :return: df_weather_dim
     """
     print(f'Creating Weather Dimension Table')
     schema = StructType([
@@ -264,11 +281,11 @@ def create_weather_dim_table(spark):
         StructField('Longitude', IntegerType(), True)
     ])
     weather_data = 'GlobalLandTemperaturesByCity.csv'
-    df_weather = spark.read.csv(weather_data, header=True, schema=schema)
-    df_weather = df_weather.withColumn('date', to_date('dt'))
+    df_weather_dim= spark.read.csv(weather_data, header=True, schema=schema)
+    df_weather_dim = df_weather_dim.withColumn('date', to_date('dt'))
 
     # Cleaning up weather data
-    df_weather = cleanup_weather_data(df_weather)
+    df_weather_dim = cleanup_weather_data(df_weather_dim)
 
     city_codes = extract_city_codes()
     city_codes = dict_to_tuples(city_codes)
@@ -279,16 +296,17 @@ def create_weather_dim_table(spark):
     df_city_codes = spark.createDataFrame(data=city_codes, schema=schema)
 
     # Only creating weather data for cities in our fact table
-    df_weather = df_weather.join(df_city_codes,
-                                 lower(df_weather['City']) == lower(
+    df_weather_dim = df_weather_dim.join(df_city_codes,
+                                         lower(df_weather_dim['City']) == lower(
                                      df_city_codes['city_name']))
-    df_weather = df_weather.drop(df_weather.city_name)
+    df_weather_dim = df_weather_dim.drop(df_weather_dim.city_name)
 
-    df_weather.printSchema();
-    print(df_weather.tail(20))
+    df_weather_dim.printSchema();
+    print(df_weather_dim.tail(20))
 
-    df_weather.write.parquet(os.path.join(output_data, 'weather_dimension'), mode='overwrite')
+    df_weather_dim.write.parquet(os.path.join(output_data, 'weather_dimension'), mode='overwrite')
     print(f'Weather Dimension Table created in {output_data}/weather_dimension')
+    return df_weather_dim
 
 
 def main():
@@ -298,23 +316,29 @@ def main():
     """
     spark = create_spark_session()
 
+    # First we create the Dimensions table
+    df_cities_demographics = create_cities_demographics_dim_table(spark)
+
+    df_countries_dim = create_country_dim_table(spark)
+
+    df_states_dim = create_state_dim_table(spark)
+
+    df_visa_types_dim= create_visatype_dim_table(spark)
+
+    df_weather_dim = create_weather_dim_table(spark)
+
+    # Now we create the Fact table and Dimension table created from Fact table
+
     df_immigration = create_immigration_df(spark, input_data)
+
+    # check_fk fconstraints
+
 
     create_immigration_fact_table(df_immigration)
 
     create_user_dim_table(df_immigration)
 
     create_time_dim_table(df_immigration)
-
-    create_cities_demographics_dim_table(spark)
-
-    create_country_dim_table(spark)
-
-    create_state_dim_table(spark)
-
-    create_visatype_dim_table(spark)
-
-    create_weather_dim_table(spark)
 
     spark.stop()
 

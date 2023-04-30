@@ -102,6 +102,43 @@ def group_cities_demographics_data(df_cities_demographics):
     return df_cities_demographics
 
 
+def immigration_dataframe_load(spark, immigration_dataframe, original_file, load_count_missing_limit):
+    """
+    Util function to check if data load is not missing lots of rows from source
+    :param spark:
+    :param immigration_dataframe:
+    :param original_file:
+    :param load_count_missing_limit:
+    :return:
+    """
+    immigration_data = original_file
+    immigration_dataframe_src = spark.read.parquet(immigration_data);
+
+    count_immigration_dataframe_src = immigration_dataframe_src.count();
+    count_immigration_dataframe = immigration_dataframe.count();
+    missing_count = count_immigration_dataframe_src - count_immigration_dataframe
+    if count_immigration_dataframe_src - count_immigration_dataframe > load_count_missing_limit:
+        print(f'Error Dataframe {immigration_dataframe} has load errors, lots of rows missing from source file')
+        raise Exception(
+            f'Error Dataframe {immigration_dataframe} has load errors, lots of rows missing from source file')
+    else:
+        print(f'Dataframe {immigration_dataframe} has passed data load checks, missing rows {missing_count} are '
+              f'within limit')
+
+
+def duplicates_removal(dataframe, key_columns):
+    """
+    Util function to check for duplicates and remove it from Dataframe
+    :param dataframe:
+    :param key_columns:
+    :return: dataframe
+    """
+    print(f'Dataframe {dataframe} count before clean up {dataframe.count()}')
+    dataframe = dataframe.dropDuplicates(key_columns)
+    print(f'Dataframe {dataframe} count before clean up {dataframe.count()}')
+    return dataframe
+
+
 def check_dataframe_rows(dataframe, raise_exception):
     """
     Util function to check if dataframe is not empty
