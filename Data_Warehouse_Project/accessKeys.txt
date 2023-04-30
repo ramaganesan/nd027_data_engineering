@@ -1,0 +1,28 @@
+ASIA3VW57V7OOD6NVE7D
+KaMIp1B42Z/Aa+04gB8NHrWJyolVQji8Yr5oJkhB
+
+adminUser
+AKIA27WO6X53L6KUU3X5
+eVQ8jS3oMdxnkSm8N6YKxDbf0zn/ZkxgP1QtAuj2
+
+export 	=AKIA27WO6X53L6KUU3X5
+export AWS_SECRET_ACCESS_KEY=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
+export AWS_DEFAULT_REGION=us-west-2
+
+
+dwhcluster.cccyqst1e86u.us-west-2.redshift.amazonaws.com:5439/dwh
+
+jdbc:redshift://dwhcluster.cccyqst1e86u.us-west-2.redshift.amazonaws.com:5439/dwh
+
+dwhcluster.cccyqst1e86u.us-west-2.redshift.amazonaws.com:5439/dwh
+
+Airflow
+AKIA3VW57V7OGBN775UF/ICD0Q3EyYIB7Kdq2ZoxQ2uhJ2k7Z7One8s0HbdFN
+Redshift
+dwhuser/Passw0rd
+
+redshift-cluster-1.c2lodtv6wa6d.us-east-1.redshift.amazonaws.com:5439/dev
+
+redshift-cluster-1.c48kgjbbk2f2.us-west-2.redshift.amazonaws.com:5439/dev
+
+-
